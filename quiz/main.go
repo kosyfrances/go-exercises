@@ -5,12 +5,16 @@ import (
         "encoding/csv"
         "fmt"
         "log"
+        "flag"
 )
 
 
 func main() {
 
-    file, err := os.Open("problems.csv")
+    var csv_file = flag.String("file", "problems.csv", "a csv file in the format of 'question,answer'")
+    flag.Parse()
+
+    file, err := os.Open(*csv_file)
 
     if err != nil {
         log.Fatal(err)
