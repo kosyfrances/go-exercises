@@ -1,24 +1,48 @@
 package main
 
 import (
-        "os"
-        "encoding/csv"
-        "fmt"
-        "log"
-        "flag"
-        "bufio"
-        "strings"
+    "bufio"
+    "encoding/csv"
+    "flag"
+    "fmt"
+    "log"
+    "os"
+    "strings"
+    "time"
 )
-
 
 func cleanStrings(chars string) string {
     return strings.ToUpper(strings.TrimSpace(chars))
 }
 
+type QuizDetail struct {
+    quiz       [][]string
+    score      int
+    quizLength int
+}
+
+func loopQuiz(quizDetail *QuizDetail, timeout chan bool) {
+    quizDetail.quizLength = len(quizDetail.quiz)
+    quizDetail.score = 0
+
+    for index, value := range quizDetail.quiz {
+
+        reader := bufio.NewReader(os.Stdin)
+        fmt.Printf("Problem #%d: %s ", index, value[0])
+        answer, _ := reader.ReadString('\n')
+
+        if cleanStrings(answer) == cleanStrings(value[1]) {
+            quizDetail.score++
+        }
+    }
+
+    timeout <- true
+}
+
 func main() {
 
     csv_file := flag.String(
-        "file",
+        "csv",
         "problems.csv",
         "a csv file in the format of 'question,answer'",
     )
@@ -32,25 +56,20 @@ func main() {
 
     defer file.Close()
 
-    quiz, err := csv.NewReader(file).ReadAll()
+    quizDetail := &QuizDetail{}
+
+    quizDetail.quiz, err = csv.NewReader(file).ReadAll()
 
     if err != nil {
         log.Fatal(err)
     }
 
-    quiz_length := len(quiz)
-    score := 0
+    quizEnded := make(chan bool)
 
-    for index, value := range quiz {
+    time.AfterFunc(30*time.Second, func() { quizEnded <- true })
 
-        reader := bufio.NewReader(os.Stdin)
-        fmt.Printf("Problem #%d: %s ", index, value[0])
-        answer, _ := reader.ReadString('\n')
+    go loopQuiz(quizDetail, quizEnded)
+    <-quizEnded
 
-        if cleanStrings(answer) == cleanStrings(value[1]) {
-            score ++
-        }
-    }
-
-    fmt.Printf("You scored %d out of %d", score, quiz_length)
+    fmt.Printf("\nYou scored %d out of %d", quizDetail.score, quizDetail.quizLength)
 }
