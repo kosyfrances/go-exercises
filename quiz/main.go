@@ -11,6 +11,10 @@ import (
 )
 
 
+func cleanStrings(chars string) string {
+    return strings.ToUpper(strings.TrimSpace(chars))
+}
+
 func main() {
 
     csv_file := flag.String("file", "problems.csv", "a csv file in the format of 'question,answer'")
@@ -39,7 +43,7 @@ func main() {
         fmt.Printf("Problem #%d: %s ", index, value[0])
         answer, _ := reader.ReadString('\n')
 
-        if strings.TrimSpace(answer) == strings.TrimSpace(value[1]) {
+        if cleanStrings(answer) == cleanStrings(value[1]) {
             score ++
         }
     }
