@@ -17,7 +17,11 @@ func cleanStrings(chars string) string {
 
 func main() {
 
-    csv_file := flag.String("file", "problems.csv", "a csv file in the format of 'question,answer'")
+    csv_file := flag.String(
+        "file",
+        "problems.csv",
+        "a csv file in the format of 'question,answer'",
+    )
     flag.Parse()
 
     file, err := os.Open(*csv_file)
