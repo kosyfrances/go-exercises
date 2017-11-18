@@ -46,6 +46,7 @@ func main() {
         "problems.csv",
         "a csv file in the format of 'question,answer'",
     )
+    timeLimit := flag.Duration("limit", 30*time.Second, "quiz time limit in seconds")
     flag.Parse()
 
     file, err := os.Open(*csv_file)
@@ -66,7 +67,7 @@ func main() {
 
     quizEnded := make(chan bool)
 
-    time.AfterFunc(30*time.Second, func() { quizEnded <- true })
+    time.AfterFunc(*timeLimit, func() { quizEnded <- true })
 
     go loopQuiz(quizDetail, quizEnded)
     <-quizEnded
