@@ -28,7 +28,7 @@ func loopQuiz(quizDetail *QuizDetail, timeout chan bool) {
     for index, value := range quizDetail.quiz {
 
         reader := bufio.NewReader(os.Stdin)
-        fmt.Printf("Problem #%d: %s ", index, value[0])
+        fmt.Printf("Problem #%d: %s ", index+1, value[0])
         answer, _ := reader.ReadString('\n')
 
         if cleanStrings(answer) == cleanStrings(value[1]) {
@@ -41,7 +41,7 @@ func loopQuiz(quizDetail *QuizDetail, timeout chan bool) {
 
 func main() {
 
-    csv_file := flag.String(
+    csvFile := flag.String(
         "csv",
         "problems.csv",
         "a csv file in the format of 'question,answer'",
@@ -49,7 +49,7 @@ func main() {
     timeLimit := flag.Duration("limit", 30*time.Second, "quiz time limit in seconds")
     flag.Parse()
 
-    file, err := os.Open(*csv_file)
+    file, err := os.Open(*csvFile)
 
     if err != nil {
         log.Fatal(err)
