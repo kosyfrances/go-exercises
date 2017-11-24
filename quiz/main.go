@@ -9,6 +9,7 @@ import (
     "os"
     "strings"
     "time"
+    "math/rand"
 )
 
 func cleanStrings(chars string) string {
@@ -21,11 +22,30 @@ type QuizDetail struct {
     quizLength int
 }
 
-func loopQuiz(quizDetail *QuizDetail, timeout chan bool) {
+func shuffleQuiz(quiz [][]string) [][]string {
+    r := rand.New(rand.NewSource(time.Now().Unix()))
+    shuffledQuizArray := make([][]string, len(quiz))
+    perm := r.Perm(len(quiz))
+
+    for index, randIndex := range perm {
+        shuffledQuizArray[index] = quiz[randIndex]
+    }
+    return shuffledQuizArray
+}
+
+func loopQuiz(quizDetail *QuizDetail, timeout chan bool, shuffle bool) {
     quizDetail.quizLength = len(quizDetail.quiz)
     quizDetail.score = 0
 
-    for index, value := range quizDetail.quiz {
+    var quiz [][] string
+
+    if shuffle {
+        quiz = shuffleQuiz(quizDetail.quiz)
+    } else {
+        quiz = quizDetail.quiz
+    }
+
+    for index, value := range quiz {
 
         reader := bufio.NewReader(os.Stdin)
         fmt.Printf("Problem #%d: %s ", index+1, value[0])
@@ -44,9 +64,10 @@ func main() {
     csvFile := flag.String(
         "csv",
         "problems.csv",
-        "a csv file in the format of 'question,answer'",
+        "A csv file in the format of 'question,answer'",
     )
-    timeLimit := flag.Duration("limit", 30*time.Second, "quiz time limit in seconds")
+    timeLimit := flag.Duration("limit", 30*time.Second, "Quiz time limit in seconds")
+    shuffle := flag.Bool("shuffle", false, "Randomly shuffle quiz questions")
     flag.Parse()
 
     file, err := os.Open(*csvFile)
@@ -69,7 +90,7 @@ func main() {
 
     time.AfterFunc(*timeLimit, func() { quizEnded <- true })
 
-    go loopQuiz(quizDetail, quizEnded)
+    go loopQuiz(quizDetail, quizEnded, *shuffle)
     <-quizEnded
 
     fmt.Printf("\nYou scored %d out of %d", quizDetail.score, quizDetail.quizLength)
