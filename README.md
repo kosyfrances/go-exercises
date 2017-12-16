@@ -1,2 +1,2 @@
 # go-exercises
-Learning golang using exercises from https://gophercises.com/
+Learning golang using exercises
