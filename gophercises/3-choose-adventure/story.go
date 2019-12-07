@@ -2,8 +2,9 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
+	"log"
 	"net/http"
+	"strings"
 	"text/template"
 )
 
@@ -48,10 +49,23 @@ type handler struct {
 func (h handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	tmpl := template.Must(template.New("").Parse(defaultHandlerTmpl))
 
-	err := tmpl.Execute(w, h.adv["intro"])
-	if err != nil {
-		fmt.Println(err)
+	path := strings.TrimSpace(r.URL.Path)
+
+	if path == "" || path == "/" {
+		path = "/intro"
 	}
+
+	path = path[1:]
+
+	if chapter, ok := h.adv[path]; ok {
+		err := tmpl.Execute(w, chapter)
+		if err != nil {
+			log.Printf("%v", err)
+			http.Error(w, "Something went wrong...", http.StatusInternalServerError)
+		}
+		return
+	}
+	http.Error(w, "Ooops! That chapter was not found.", http.StatusNotFound)
 }
 
 func newHandler(adv adventure) http.Handler {

@@ -13,7 +13,7 @@ func main() {
 	port := flag.Int("port", 3000, "the port to start the server for the adventure story")
 	flag.Parse()
 
-	fmt.Printf("Using the adventure story file %v", *fileName)
+	log.Printf("Using the adventure story file %v", *fileName)
 
 	content, err := ioutil.ReadFile(*fileName)
 	if err != nil {
@@ -27,6 +27,6 @@ func main() {
 
 	h := newHandler(adv)
 
-	fmt.Printf("Starting server on port: %d\n", *port)
+	log.Printf("Starting server on port: %d\n", *port)
 	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", *port), h))
 }
