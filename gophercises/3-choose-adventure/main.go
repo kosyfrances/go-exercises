@@ -6,6 +6,8 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"strings"
+	"text/template"
 )
 
 func main() {
@@ -25,8 +27,42 @@ func main() {
 		panic(err)
 	}
 
-	h := newHandler(adv)
+	tmpl := template.Must(template.New("").Parse(storyTmpl))
+	h := newHandler(adv, withTemplate(tmpl), withPathFunc(pathFn))
 
+	mux := http.NewServeMux()
+	mux.Handle("/story/", h)
 	log.Printf("Starting server on port: %d\n", *port)
-	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", *port), h))
+	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", *port), mux))
 }
+
+func pathFn(r *http.Request) string {
+	path := strings.TrimSpace(r.URL.Path)
+
+	if path == "story" || path == "/story/" {
+		path = "/story/intro"
+	}
+
+	return path[len("/story/"):]
+}
+
+var storyTmpl = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Choose Your Own Adventure</title>
+</head>
+<body>
+    <h1>{{.Title}}</h1>
+    {{range .Paragraphs}}
+        <p>{{.}}</p>
+    {{end}}
+    <ul>
+    {{range .Options}}
+        <li><a href="/story/{{.Arc}}">{{.Text}}</a></li>
+    {{end}}
+    </ul>
+</body>
+</html>
+`

@@ -29,6 +29,12 @@ var defaultHandlerTmpl = `
 </html>
 `
 
+var tmpl *template.Template
+
+func init() {
+	tmpl = template.Must(template.New("").Parse(defaultHandlerTmpl))
+}
+
 type chapter struct {
 	Title      string   `json:"title"`
 	Paragraphs []string `json:"story"`
@@ -42,20 +48,46 @@ type option struct {
 
 type adventure map[string]chapter
 
+type handlerOption func(h *handler)
+
 type handler struct {
-	adv adventure
+	adv    adventure
+	t      *template.Template
+	pathFn func(r *http.Request) string
 }
 
-func (h handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	tmpl := template.Must(template.New("").Parse(defaultHandlerTmpl))
+func withTemplate(t *template.Template) handlerOption {
+	return func(h *handler) {
+		h.t = t
+	}
+}
 
+func defaultPathFn(r *http.Request) string {
 	path := strings.TrimSpace(r.URL.Path)
 
 	if path == "" || path == "/" {
 		path = "/intro"
 	}
 
-	path = path[1:]
+	return path[1:]
+}
+
+func withPathFunc(fn func(r *http.Request) string) handlerOption {
+	return func(h *handler) {
+		h.pathFn = fn
+	}
+}
+
+func newHandler(adv adventure, opts ...handlerOption) http.Handler {
+	h := handler{adv, tmpl, defaultPathFn}
+	for _, opt := range opts {
+		opt(&h)
+	}
+	return h
+}
+
+func (h handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	path := h.pathFn(r)
 
 	if chapter, ok := h.adv[path]; ok {
 		err := tmpl.Execute(w, chapter)
@@ -66,10 +98,6 @@ func (h handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	http.Error(w, "Ooops! That chapter was not found.", http.StatusNotFound)
-}
-
-func newHandler(adv adventure) http.Handler {
-	return handler{adv}
 }
 
 func mapAdventure(content []byte) (adventure, error) {
