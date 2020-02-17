@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"go-exercises/urlshort"
+	urlshort "github.com/kosyfrances/go-exercises/gophercises/2-urlshortener"
 )
 
 func main() {
